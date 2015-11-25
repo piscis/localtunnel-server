@@ -5,12 +5,13 @@ var localtunnel = require('localtunnel');
 
 var localtunnel_server = require('../server')();
 
+suite('basic');
+
 var lt_server_port
 
-test('setup localtunnel server', function(done) {
+before('set up localtunnel server', function(done) {
     var server = localtunnel_server.listen(function() {
         lt_server_port = server.address().port;
-        console.log('lt server on:', lt_server_port);
         done();
     });
 });
@@ -34,7 +35,7 @@ test('landing page', function(done) {
         });
 
         res.on('end', function() {
-            assert(body.indexOf('<h2>expose yourself to the world</h2>') > 0);
+            assert(body.indexOf('<title>Localtunnel ~ Expose yourself to the world</title>') > 0);
             done();
         });
     });
@@ -42,7 +43,7 @@ test('landing page', function(done) {
     req.end();
 });
 
-test('setup local http server', function(done) {
+before('set up local http server', function(done) {
     var server = http.createServer();
     server.on('request', function(req, res) {
         res.write('foo');
@@ -52,12 +53,11 @@ test('setup local http server', function(done) {
         var port = server.address().port;
 
         test._fake_port = port;
-        console.log('local http on:', port);
         done();
     });
 });
 
-test('setup localtunnel client', function(done) {
+before('set up localtunnel client', function(done) {
     var opt = {
         host: 'http://localhost:' + lt_server_port,
     };
@@ -121,12 +121,12 @@ test('request specific domain', function(done) {
 test('request domain that is too long', function(done) {
     var opt = {
         host: 'http://localhost:' + lt_server_port,
-        subdomain: 'thisdomainisoutsidethesizeofwhatweallow'
+        subdomain: 'thisdomainisoutsidethesizeofwhatweallowwhichissixtythreecharacters'
     };
 
     localtunnel(test._fake_port, opt, function(err, tunnel) {
         assert(err);
-        assert.equal(err.message, 'Invalid subdomain. Subdomains must be lowercase and between 4 and 20 alphanumeric characters.');
+        assert.equal(err.message, 'Invalid subdomain. Subdomains must be lowercase and between 4 and 63 alphanumeric characters.');
         done();
     });
 });
@@ -139,11 +139,11 @@ test('request uppercase domain', function(done) {
 
     localtunnel(test._fake_port, opt, function(err, tunnel) {
         assert(err);
-        assert.equal(err.message, 'Invalid subdomain. Subdomains must be lowercase and between 4 and 20 alphanumeric characters.');
+        assert.equal(err.message, 'Invalid subdomain. Subdomains must be lowercase and between 4 and 63 alphanumeric characters.');
         done();
     });
 });
 
-test('shutdown', function() {
+after('shutdown', function() {
     localtunnel_server.close();
 });
